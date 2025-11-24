@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: imtera-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./server/storage/logs:/var/www/html/storage/logs
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: base64:ktMKmvtAQARga1Kv75S7LgTG62ysr9shpnqyWEv5Pj0=
+      DB_CONNECTION: sqlite
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: imtera-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NUXT_PUBLIC_API_URL: http://backend:8000/api
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  default:
+    name: imtera-network
